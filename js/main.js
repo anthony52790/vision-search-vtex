@@ -85,9 +85,7 @@ function initCameraUI() {
       download.classList.remove('active');
     }
     location.reload();
-    //setInterval('location.reload()', 100);  
   })
-  // -- fullscreen part
 
   function fullScreenChange() {
     if (screenfull.isFullscreen) {
