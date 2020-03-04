@@ -12,7 +12,7 @@ var currentFacingMode = 'environment';
 var disabled;
 var download;
 var closePhoto;
-window.apiKey = 'AIzaSyBc8eS5GCp8PPvpfFjLiR9ZO7tGdIjaBwo';
+window.apiKey = '';
 var key_vision = 'https://vision.googleapis.com/v1/images:annotate?key='+window.apiKey;
 var key_translate = 'https://translation.googleapis.com/language/translate/v2?key='+window.apiKey;
 
