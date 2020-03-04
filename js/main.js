@@ -12,7 +12,7 @@ var currentFacingMode = 'environment';
 var disabled;
 var download;
 var closePhoto;
-window.apiKey = '';
+window.apiKey = 'AIzaSyBc8eS5GCp8PPvpfFjLiR9ZO7tGdIjaBwo';
 var key_vision = 'https://vision.googleapis.com/v1/images:annotate?key='+window.apiKey;
 var key_translate = 'https://translation.googleapis.com/language/translate/v2?key='+window.apiKey;
 
@@ -81,10 +81,7 @@ function initCameraUI() {
     if (disabled.classList.contains('disabled')) {
       disabled.classList.remove('disabled');
     }
-    if (download.classList.contains('active')) {
-      download.classList.remove('active');
-    }
-    location.reload();
+    location.href = location.href;
   })
 
   function fullScreenChange() {
@@ -202,7 +199,7 @@ function takeSnapshot() {
   var width = video.videoWidth;
   var height = video.videoHeight;
   var context;
-  var img = new Image();
+  //var img = new Image();
 
   canvas.width = width;
   canvas.height = height;
@@ -210,18 +207,12 @@ function takeSnapshot() {
   context = canvas.getContext('2d');
   context.drawImage(video, 0, 0, width, height);
 
-  capture = canvas.toDataURL('image/jpeg');//download
-  download.classList.add('active');
-  download.setAttribute('href',capture);
-
-  img.src = capture;//capture
-
+  capture = canvas.toDataURL('image/jpeg');
+  //download.setAttribute('href',capture);//descargar
+  //img.src = capture;//mostrar imagen
   var dataURL = capture.replace('data:image/jpeg;base64,', '');
   sendFileToCloudVision(dataURL);
-
   disabled.classList.add('disabled');
-  closePhoto.classList.add('active');
-  download.classList.add('active');
   video.pause();
   //const track = window.stream.getVideoTracks()[0]; //salir de la foto
   //track.stop();
@@ -250,15 +241,13 @@ function sendFileToCloudVision(dataURL){
     }]
   }
 
-  $('.loading').addClass('active');
-
   $.ajax({
     url:key_vision,
     type:"POST",
     data:JSON.stringify(request),
     contentType:'application/json'
   }).done(function(response){
-    convertToSpanish(response);
+      convertToSpanish(response);
   }).fail(function (jqXHR, textStatus, errorThrown){
     console.log(jqXHR, textStatus, errorThrown)
   })
@@ -266,8 +255,8 @@ function sendFileToCloudVision(dataURL){
 
 function convertToSpanish(res){
 
+  $('.content').addClass('active');  
   var text = res.responses[0].localizedObjectAnnotations[0].name;
-
   var req ={
     q: text,
     source: "en",
@@ -280,24 +269,30 @@ function convertToSpanish(res){
     data:JSON.stringify(req),
     contentType :'application/json'
   }).done(function(data){
-    console.log(data)
+    closePhoto.classList.add('active');
     sendToVtexSearch(data);
-    $('.loading').removeClass('active');
   }).fail(function (jqXHR, textStatus, errorThrown){
     console.log(jqXHR, textStatus, errorThrown)
   })
 }
 
 function sendToVtexSearch(res){
-  $('.content').addClass('active');
   var search = res.data.translations[0].translatedText;
   var a = $.trim(search.replace(/\'|\"/, ""));
   a.match(/^[a-n o-záéíóú \-]+$/i);
   $.ajax({
-    url:'https://www.promart.pe/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a),
+    url:'/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a),
     type : 'GET',
   }).done(function(data){
-    //$('.content').removeClass('active');
+    if(data.length > 0){
+      console.log(data)
+    }else{
+      console.log("no existe datos relacionados en vtex")
+    }
+  }).fail(function (jqXHR, textStatus, errorThrown){
+    if(textStatus == "error" || jqXHR.status == 404){
+      console.log("error de conexion con vtex")
+    }
   })
 }
 

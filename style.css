@@ -38,7 +38,6 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-
   z-index: 10;
   background-color: rgb(255, 255, 255);
 }
@@ -50,9 +49,7 @@ body {
   position: relative;
   padding-top: 5px;
 }
-.icons-top a{
-  position: absolute;
-}
+
 .close-photo{
   left: 0;
   padding-left: 10px;
@@ -70,38 +67,38 @@ body {
   display: block;
 }
 .loading {
-  background: rgba(255, 255, 255, 0.5);
-  z-index: 999;
+  /*background: rgba(255, 255, 255, 0.5);*/
+  z-index: 11;
   position: relative;
   width: 100%;
   height: 100%;
-  display: none;
 }
 .loading.active{
   display: block;
 }
 .content{
   position: absolute;
-  background-color:#fff;
-  top: 100%;
+  background-color: #fff;
+  top: 0;
   left: 0;
   bottom: 0;
   right: 0;
   width: 100%;
-  height: 100%;
+  height: 50%;
   z-index: 9;
   transition: all .3s linear;
-  transform: translateY(0%);
+  transform: translateY(200%);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+  touch-action: none;
 }
 .content.active{
-  transform: translateY(-95%);
+  transform: translateY(100%);
 }
 
 .icon-load {
   background: url(/img/loading.gif) no-repeat center;
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   display: block;
   margin: auto;
@@ -181,6 +178,7 @@ button {
   #vid_container {
     width: 100%;
     height: 80%;
+    touch-action: none;
   }
 
   #gui_controls {
