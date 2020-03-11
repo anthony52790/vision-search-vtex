@@ -95,7 +95,9 @@ body {
 .content.active{
   transform: translateY(100%);
 }
-
+#error {
+  text-align: center;
+}
 .icon-load {
   background: url(/img/loading.gif) no-repeat center;
   background-size: contain;

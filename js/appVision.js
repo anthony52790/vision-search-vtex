@@ -1,5 +1,9 @@
 'use strict';
 
+var apiKey = 'AIzaSyBc8eS5GCp8PPvpfFjLiR9ZO7tGdIjaBwo';
+var key_vision = 'https://vision.googleapis.com/v1/images:annotate?key='+apiKey;
+var key_translate = 'https://translation.googleapis.com/language/translate/v2?key='+apiKey;
+
 var takeSnapshotUI = createClickFeedbackUI();
 
 var video;
@@ -12,9 +16,6 @@ var currentFacingMode = 'environment';
 var disabled;
 var download;
 var closePhoto;
-window.apiKey = 'AIzaSyBc8eS5GCp8PPvpfFjLiR9ZO7tGdIjaBwo';
-var key_vision = 'https://vision.googleapis.com/v1/images:annotate?key='+window.apiKey;
-var key_translate = 'https://translation.googleapis.com/language/translate/v2?key='+window.apiKey;
 
 document.addEventListener('DOMContentLoaded', function(event) {
   DetectRTC.load(function() {
@@ -122,9 +123,7 @@ function initCameraUI() {
     });
   }
 
-  window.addEventListener(
-    'orientationchange',
-    function() {
+  window.addEventListener('orientationchange',function() {
       // iOS doesn't have screen.orientation, so fallback to window.orientation.
       // screen.orientation will
       if (screen.orientation) angle = screen.orientation.angle;
@@ -165,10 +164,7 @@ function initCameraStream() {
     },
   };
 
-  navigator.mediaDevices
-    .getUserMedia(constraints)
-    .then(handleSuccess)
-    .catch(handleError);
+  navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
 
   function handleSuccess(stream) {
     window.stream = stream;
@@ -210,69 +206,41 @@ function takeSnapshot() {
   capture = canvas.toDataURL('image/jpeg');
   //download.setAttribute('href',capture);//descargar
   //img.src = capture;//mostrar imagen
-  var dataURL = capture.replace('data:image/jpeg;base64,', '');
-  sendFileToCloudVision(dataURL);
+  var urlImage = capture.replace('data:image/jpeg;base64,', '');
+  sendFileToCloudVision(urlImage);
   disabled.classList.add('disabled');
   video.pause();
   //const track = window.stream.getVideoTracks()[0]; //salir de la foto
   //track.stop();
 }
-function sendFileToCloudVision(dataURL){
+function sendFileToCloudVision(urlImage){
   var request = {
     requests:[{
-      image:{
-        content : dataURL
-      },
+      image:{content : urlImage},
       features:[
-        {
-        type: "OBJECT_LOCALIZATION",
-        maxResults: 10
-        },
-        {
-          maxResults: 10,
-          type: "LABEL_DETECTION"
-        }
+        {type: "OBJECT_LOCALIZATION",maxResults: 10},
+        {maxResults: 10,type: "LABEL_DETECTION"}
       ],
       imageContext: {
-        cropHintsParams:{
-          aspectRatios:[0.8,1,1.2]
-        }
+        cropHintsParams:{aspectRatios:[0.8,1,1.2]}
       }
     }]
   }
 
-  $.ajax({
-    url:key_vision,
-    type:"POST",
-    data:JSON.stringify(request),
-    contentType:'application/json'
-  }).done(function(response){
-      convertToSpanish(response);
-  }).fail(function (jqXHR, textStatus, errorThrown){
-    console.log(jqXHR, textStatus, errorThrown)
+  ajax(key_vision,JSON.stringify(request)).then(function(res){
+    closePhoto.classList.add('active');
+    convertToSpanish(JSON.parse(res));
   })
 }
 
 function convertToSpanish(res){
-
-  $('.content').addClass('active');  
+  console.log(res);
+  $('.content').addClass('active');
   var text = res.responses[0].localizedObjectAnnotations[0].name;
-  var req ={
-    q: text,
-    source: "en",
-    target: "es",
-    format: "text"
-  }
-  $.ajax({
-    url:key_translate,
-    type:"POST",
-    data:JSON.stringify(req),
-    contentType :'application/json'
-  }).done(function(data){
-    closePhoto.classList.add('active');
-    sendToVtexSearch(data);
-  }).fail(function (jqXHR, textStatus, errorThrown){
-    console.log(jqXHR, textStatus, errorThrown)
+  var req ={q: text,source: "en",target: "es",format: "text"}
+
+  ajax(key_translate,JSON.stringify(req)).then(function(res){
+    sendToVtexSearch(JSON.parse(res));
   })
 }
 
@@ -280,6 +248,7 @@ function sendToVtexSearch(res){
   var search = res.data.translations[0].translatedText;
   var a = $.trim(search.replace(/\'|\"/, ""));
   a.match(/^[a-n o-záéíóú \-]+$/i);
+  document.getElementsByClassName("loading")[0].style.display = 'none';
   $.ajax({
     url:'/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a),
     type : 'GET',
@@ -291,7 +260,7 @@ function sendToVtexSearch(res){
     }
   }).fail(function (jqXHR, textStatus, errorThrown){
     if(textStatus == "error" || jqXHR.status == 404){
-      console.log("error de conexion con vtex")
+      document.getElementById("error").innerHTML= "error de conexion con vtex";
     }
   })
 }
@@ -316,4 +285,25 @@ function createClickFeedbackUI() {
       setTimeout(setFalseAgain, timeOut);
     }
   };
+}
+
+
+//config ajax
+function ajax(url,data){
+  return new Promise((resolve,reject) => {
+      const http = new XMLHttpRequest();
+      http.onreadystatechange = function (){
+          if(http.readyState == 4 && http.status == 200){
+              resolve(http.response);
+          }else if(http.status == 404){
+              reject(Error(http.statusText));
+          }
+      }
+      http.onerror = function(){
+        reject(Error("Error de red"))
+      }
+      http.open("POST",url);
+      http.setRequestHeader('Content-Type','application/json');
+      http.send(data);
+  })
 }
