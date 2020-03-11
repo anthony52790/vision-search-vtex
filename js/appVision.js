@@ -4,8 +4,6 @@ var apiKey = 'AIzaSyBc8eS5GCp8PPvpfFjLiR9ZO7tGdIjaBwo';
 var key_vision = 'https://vision.googleapis.com/v1/images:annotate?key='+apiKey;
 var key_translate = 'https://translation.googleapis.com/language/translate/v2?key='+apiKey;
 
-var takeSnapshotUI = createClickFeedbackUI();
-
 var video;
 var capture;
 var takePhotoButton;
@@ -72,7 +70,7 @@ function initCameraUI() {
   closePhoto = document.getElementById('close-photo');
 
   takePhotoButton.addEventListener('click', function() {
-    takeSnapshotUI();
+    createClickFeedbackUI();
     takeSnapshot();
   });
   closePhoto.addEventListener('click',function(){
@@ -227,7 +225,7 @@ function sendFileToCloudVision(urlImage){
     }]
   }
 
-  ajax(key_vision,JSON.stringify(request)).then(function(res){
+  ajaxVision(key_vision,JSON.stringify(request)).then(function(res){
     closePhoto.classList.add('active');
     convertToSpanish(JSON.parse(res));
   })
@@ -239,7 +237,7 @@ function convertToSpanish(res){
   var text = res.responses[0].localizedObjectAnnotations[0].name;
   var req ={q: text,source: "en",target: "es",format: "text"}
 
-  ajax(key_translate,JSON.stringify(req)).then(function(res){
+  ajaxVision(key_translate,JSON.stringify(req)).then(function(res){
     sendToVtexSearch(JSON.parse(res));
   })
 }
@@ -249,19 +247,15 @@ function sendToVtexSearch(res){
   var a = $.trim(search.replace(/\'|\"/, ""));
   a.match(/^[a-n o-záéíóú \-]+$/i);
   document.getElementsByClassName("loading")[0].style.display = 'none';
-  $.ajax({
-    url:'/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a),
-    type : 'GET',
-  }).done(function(data){
-    if(data.length > 0){
+  var url='/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
+  ajaxVtex(url).then(function(res){
+    if(res.length > 0){
       console.log(data)
     }else{
-      console.log("no existe datos relacionados en vtex")
+      document.getElementById("alert").innerHTML = "No existe coincidencias";
     }
-  }).fail(function (jqXHR, textStatus, errorThrown){
-    if(textStatus == "error" || jqXHR.status == 404){
-      document.getElementById("error").innerHTML= "error de conexion con vtex";
-    }
+  }).catch(function(error){
+      document.getElementById("error").innerHTML = error;
   })
 }
 
@@ -288,8 +282,8 @@ function createClickFeedbackUI() {
 }
 
 
-//config ajax
-function ajax(url,data){
+//config ajax vision cloud
+function ajaxVision(url,data){
   return new Promise((resolve,reject) => {
       const http = new XMLHttpRequest();
       http.onreadystatechange = function (){
@@ -306,4 +300,21 @@ function ajax(url,data){
       http.setRequestHeader('Content-Type','application/json');
       http.send(data);
   })
+}
+function ajaxVtex(url){
+  return new Promise((resolve,reject) => {
+    const http = new XMLHttpRequest();
+    http.onreadystatechange = function (){
+        if(http.readyState == 4 && http.status == 200){
+            resolve(http.response);
+        }else if(http.status == 404){
+            reject(Error(http.statusText));
+        }
+    }
+    http.onerror = function(){
+      reject(Error("error de conexion con vtex"))
+    }
+    http.open("GET",url);
+    http.setRequestHeader('Content-Type','application/json');
+})
 }
