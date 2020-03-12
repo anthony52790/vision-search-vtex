@@ -60,16 +60,17 @@ document.addEventListener('DOMContentLoaded', function(event) {
 });
 
 function initCameraUI() {
-  video = document.getElementById('video');
+  video = document.getElementById('gcv_video');
 
-  takePhotoButton = document.getElementById('takePhotoButton');
-  toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
-  switchCameraButton = document.getElementById('switchCameraButton');
-  download = document.getElementById('download');
-  disabled = document.getElementById('gui_controls');
-  closePhoto = document.getElementById('close-photo');
+  takePhotoButton = document.getElementById('gcv_takePhotoButton');
+  toggleFullScreenButton = document.getElementById('gcv_toggleFullScreenButton');
+  switchCameraButton = document.getElementById('gcv_switchCameraButton');
+  download = document.getElementById('gcv_download');
+  disabled = document.getElementById('gcv_gui_controls');
+  closePhoto = document.getElementById('gcv_close-photo');
 
-  takePhotoButton.addEventListener('click', function() {
+  takePhotoButton.addEventListener('click', function(e) {
+    console.log(e.target)
     createClickFeedbackUI();
     takeSnapshot();
   });
@@ -127,8 +128,8 @@ function initCameraUI() {
       if (screen.orientation) angle = screen.orientation.angle;
       else angle = window.orientation;
 
-      var guiControls = document.getElementById('gui_controls').classList;
-      var vidContainer = document.getElementById('vid_container').classList;
+      var guiControls = document.getElementById('gcv_gui_controls').classList;
+      var vidContainer = document.getElementById('gcv_vid_container').classList;
 
       if (angle == 270 || angle == -90) {
         guiControls.add('left');
@@ -143,6 +144,7 @@ function initCameraUI() {
 }
 
 function initCameraStream() {
+
   if (window.stream) {
     window.stream.getTracks().forEach(function(track) {
       track.stop();
@@ -150,7 +152,6 @@ function initCameraStream() {
   }
 
   var size = 1280;
-
   var constraints = {
     audio: false,
     video: {
@@ -161,12 +162,12 @@ function initCameraStream() {
       facingMode: currentFacingMode,
     },
   };
-
   navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess).catch(handleError);
 
   function handleSuccess(stream) {
     window.stream = stream;
     video.srcObject = stream;
+    
     if (constraints.video.facingMode) {
       if (constraints.video.facingMode === 'environment') {
         switchCameraButton.setAttribute('aria-pressed', true);
@@ -174,7 +175,6 @@ function initCameraStream() {
         switchCameraButton.setAttribute('aria-pressed', false);
       }
     }
-
     const track = window.stream.getVideoTracks()[0];
     const settings = track.getSettings();
     str = JSON.stringify(settings, null, 4);
@@ -186,6 +186,28 @@ function initCameraStream() {
       alert('Permission denied. Please refresh and give permission.');
     }
   }
+
+}
+function createClickFeedbackUI() {
+
+  var overlay = document.getElementById('video_overlay');
+  var sndClick = new Howl({ src: ['snd/click.mp3'] });
+  var overlayVisibility = false;
+  var timeOut = 80;
+
+  function setFalseAgain() {
+    overlayVisibility = false;
+    overlay.style.display = 'none';
+  }
+
+  return function() {
+    if (overlayVisibility == false) {
+      sndClick.play();
+      overlayVisibility = true;
+      overlay.style.display = 'block';
+      setTimeout(setFalseAgain, timeOut);
+    }
+  };
 }
 
 function takeSnapshot() {
@@ -230,60 +252,41 @@ function sendFileToCloudVision(urlImage){
     convertToSpanish(JSON.parse(res));
   })
 }
-
 function convertToSpanish(res){
-  $('.content').addClass('active');
-  var text = res.responses[0].localizedObjectAnnotations[0].name;
-  var req ={q: text,source: "en",target: "es",format: "text"}
-  ajaxVision(key_translate,JSON.stringify(req)).then(function(res){
-    sendToVtexSearch(JSON.parse(res));
-  })
+  $('.gcv_content').addClass('active');
+  if(res.responses[0]['localizedObjectAnnotations'] === undefined){
+    setTimeout(function(){
+      document.getElementsByClassName("gcv_loading")[0].style.display = 'none';
+    },1000)
+    document.getElementById("gcv_error").innerHTML = "Conecte una camara en el dispositivo";
+  }else{
+    var text = res.responses[0].localizedObjectAnnotations[0].name;
+    var req ={q: text,source: "en",target: "es",format: "text"}
+    ajaxVision(key_translate,JSON.stringify(req)).then(function(res){
+      sendToVtexSearch(JSON.parse(res));
+    })    
+  }
 }
-
 function sendToVtexSearch(res){
   var search = res.data.translations[0].translatedText;
   var a = search.trim();
   a.match(/^[a-n o-záéíóú \-]+$/i);
-  document.getElementsByClassName("loading")[0].style.display = 'none';
+  document.getElementsByClassName("gcv_loading")[0].style.display = 'none';
   if(a === "Persona"){
-    document.getElementById("error").innerHTML = "Error: solo se permiten productos";
+    document.getElementById("gcv_error").innerHTML = "Error: solo se permiten productos";
   }else{
     var url='/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
     ajaxVtex(url).then(function(res){
       if(res.length > 0){
         console.log(data)
       }else{
-        document.getElementById("alert").innerHTML = "No existe coincidencias";
+        document.getElementById("gcv_alert").innerHTML = "No existe coincidencias";
       }
     }).catch(function(error){
-        document.getElementById("error").innerHTML = error;
+        document.getElementById("gcv_error").innerHTML = error;
     })    
   }
 }
-
-function createClickFeedbackUI() {
-
-  var overlay = document.getElementById('video_overlay');
-  var sndClick = new Howl({ src: ['snd/click.mp3'] });
-  var overlayVisibility = false;
-  var timeOut = 80;
-
-  function setFalseAgain() {
-    overlayVisibility = false;
-    overlay.style.display = 'none';
-  }
-
-  return function() {
-    if (overlayVisibility == false) {
-      sndClick.play();
-      overlayVisibility = true;
-      overlay.style.display = 'block';
-      setTimeout(setFalseAgain, timeOut);
-    }
-  };
-}
-
-
 //config ajax vision cloud
 function ajaxVision(url,data){
   return new Promise((resolve,reject) => {
@@ -292,7 +295,7 @@ function ajaxVision(url,data){
           if(http.readyState == 4 && http.status == 200){
               resolve(http.response);
           }else if(http.status == 404){
-              reject(Error(http.statusText));
+              reject("Error de conexion con Google Cloud Vision");
           }
       }
       http.onerror = function(){

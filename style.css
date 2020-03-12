@@ -3,33 +3,29 @@ body {
   padding: 0px;
   background: #000;
 }
-
-#vid_container {
+#gcv_vid_container {
   position: fixed;
   top: 0;
   left: 0;
 }
-
-#video {
+#gcv_video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   z-index: 0;
 }
-
-#gui_controls {
+#gcv_gui_controls {
   position: fixed;
-  //background-color: #111; /*rgba(255, 0, 0, 0.5);*/
+  //background-color: #111;
   z-index: 2;
   bottom: 0;
 }
-#gui_controls.disabled #takePhotoButton{
+#gcv_gui_controls.disabled #gcv_takePhotoButton{
   pointer-events: none;
   touch-action: none;
   opacity: 0.1;
 }
-
-#video_overlay {
+#gcv_video_overlay {
   position: fixed;
   display: none;
   width: 100%;
@@ -41,42 +37,142 @@ body {
   z-index: 10;
   background-color: rgb(255, 255, 255);
 }
-
-.icons-top {
-  display: inline-flex;
-  width: 100%;
-  z-index: 10;
-  position: relative;
-  padding-top: 5px;
+#gcv_message-cam {
+    display:none;
+    position: absolute;
+    width: 50%;
+    height: 6%;
+    bottom: 120px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 15px;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
 }
-
-.close-photo{
-  left: 0;
-  padding-left: 10px;
-  display: none;
-}
-.close-photo.active{
+#gcv_message-cam.active{
   display:block;
 }
-.download {
-  right: 0;
-  padding-right: 10px;
+
+#gcv_gui_controls button {
+  outline: none;
+  position: absolute;
+  color: white;
+  display: block;
+  opacity: 1;
+  background: transparent;
+  border: solid 5px #fff;
+  padding: 0;
+  text-shadow: 0px 0px 4px black;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: auto;
+  z-index: 2;
+}
+#gcv_gui_controls #gcv_takePhotoButton {
+    border-radius: 50%;
+    padding: 5px;
+}
+#gcv_gui_controls #gcv_takePhotoButton:active {
+  background-color: #fff;
+}
+#gcv_gui_controls #gcv_takePhotoButton .shop-cart{
+    background-image: url(img/shopping-cart.png);
+    background-repeat:no-repeat;
+    background-position:center;
+    border-radius: 50%;
+    background-color: rgb(255, 255, 255);
+    background-size: 45px 45px;  
+    width: 80px;
+    height: 80px;
+    display: block;
+}
+#gcv_gui_controls #gcv_switchCameraButton{
   display: none;
+  border-radius: 50%;
+  padding: 5px;
+  background-color: #fff;
 }
-.download.active{
-  display: block;
+#gcv_gui_controls #gcv_switchCameraButton .switch-cam{
+  -webkit-mask:url('img/ic_camera_rear_white_36px.svg') no-repeat 50% 50%;
+  mask:url('img/ic_camera_rear_white_36px.svg') no-repeat 50% 50%;  
+    display: block;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgb(0, 0, 0);
 }
-.loading {
-  /*background: rgba(255, 255, 255, 0.5);*/
-  z-index: 11;
-  position: relative;
-  width: 100%;
-  height: 100%;
+#gcv_gui_controls #gcv_switchCameraButton[aria-pressed='true'] .switch-cam{
+  -webkit-mask:url('img/ic_camera_rear_white_36px.svg') no-repeat 50% 50%;
+  mask:url('img/ic_camera_rear_white_36px.svg') no-repeat 50% 50%;
 }
-.loading.active{
-  display: block;
+/*FULLSCREEN INAVILITADO*/
+#toggleFullScreenButton {
+  display: none;
+  width: 64px;
+  height: 64px;
+  background-image: url('img/ic_fullscreen_white_48px.svg');
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
 }
-.content{
+#toggleFullScreenButton[aria-pressed='true'] {
+  background-image: url('img/ic_fullscreen_exit_white_48px.svg');
+}
+
+@media screen and (orientation: portrait) {
+  #gcv_vid_container {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+  #gcv_gui_controls {
+    width: 100%;
+    height: 20%;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #gcv_switchCameraButton {
+    left: calc(17% - 32px);
+    top: calc(47% - 32px);
+  }
+  #gcv_toggleFullScreenButton {
+    left: calc(80% - 32px);
+    top: calc(50% - 32px);
+  }
+}
+@media screen and (orientation: landscape) {
+  #gcv_vid_container {
+    width: 80%;
+    height: 100%;
+  }
+  #gcv_vid_container.left {
+    left: 20%;
+  }
+  #gcv_gui_controls {
+    width: 20%;
+    height: 100%;
+    right: 0;
+  }
+  #gcv_gui_controls.left {
+    left: 0;
+  }
+  #gcv_switchCameraButton {
+    left: calc(50% - 32px);
+    top: calc(18% - 32px);
+  }
+  #gcv_toggleFullScreenButton {
+    left: calc(50% - 32px);
+    top: calc(82% - 32px);
+  }
+}
+
+
+.gcv_content{
   position: absolute;
   background-color: #fff;
   top: 0;
@@ -92,13 +188,34 @@ body {
   border-top-right-radius: 10px;
   touch-action: none;
 }
-.content.active{
+.gcv_content.active{
   transform: translateY(100%);
 }
-#error {
-  text-align: center;
+.gcv_icons-top {
+  display: inline-flex;
+  width: 100%;
+  z-index: 10;
+  position: relative;
+  padding-top: 5px;
 }
-.icon-load {
+.gcv_close-photo{
+  left: 0;
+  padding-left: 10px;
+  display: none;
+}
+.gcv_close-photo.active{
+  display:block;
+}
+.gcv_loading {
+  z-index: 11;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.gcv_loading.active{
+  display: block;
+}
+.gcv_icon-load {
   background: url(/img/loading.gif) no-repeat center;
   background-size: contain;
   background-position: center;
@@ -112,123 +229,15 @@ body {
   left: 0;
   right: 0;
 }
-/*  Button style from: 
-    https://googlesamples.github.io/web-fundamentals/fundamentals/media/mobile-web-video-playback.html */
+#gcv_error {
+  text-align: center;
+}
 
-button {
-  outline: none;
-  position: absolute;
-  color: white;
+.download {
+  right: 0;
+  padding-right: 10px;
+  display: none;
+}
+.download.active{
   display: block;
-  opacity: 1;
-  background: transparent;
-  border: solid 2px #fff;
-  padding: 0;
-  text-shadow: 0px 0px 4px black;
-  background-position: center center;
-  background-repeat: no-repeat;
-  pointer-events: auto;
-  z-index: 2;
-}
-
-#takePhotoButton {
-  left: calc(50% - 40px);
-  top: calc(50% - 40px);
-  width: 80px;
-  height: 80px;
-  background-image: url('img/ic_photo_camera_white_48px.svg');
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-#takePhotoButton:active {
-  background-color: #fff;
-}
-
-#toggleFullScreenButton {
-  display: none;
-  width: 64px;
-  height: 64px;
-  background-image: url('img/ic_fullscreen_white_48px.svg');
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-#toggleFullScreenButton[aria-pressed='true'] {
-  background-image: url('img/ic_fullscreen_exit_white_48px.svg');
-}
-
-#switchCameraButton {
-  display: none;
-  width: 64px;
-  height: 64px;
-  background-image: url('img/ic_camera_rear_white_36px.svg');
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-#switchCameraButton[aria-pressed='true'] {
-  background-image: url('img/ic_camera_front_white_36px.svg');
-}
-
-@media screen and (orientation: portrait) {
-  /* portrait-specific styles */
-
-  /* video_container (video) doesn't respect height... 
-       so we will fill it in completely in portrait mode
-    */
-  #vid_container {
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-  }
-
-  #gui_controls {
-    width: 100%;
-    height: 20%;
-    left: 0;
-  }
-
-  #switchCameraButton {
-    left: calc(20% - 32px);
-    top: calc(50% - 32px);
-  }
-
-  #toggleFullScreenButton {
-    left: calc(80% - 32px);
-    top: calc(50% - 32px);
-  }
-}
-
-@media screen and (orientation: landscape) {
-  #vid_container {
-    width: 80%;
-    height: 100%;
-  }
-
-  #vid_container.left {
-    left: 20%;
-  }
-
-  /* we default to right */
-  #gui_controls {
-    width: 20%;
-    height: 100%;
-    right: 0;
-  }
-
-  /* for the lefties */
-  #gui_controls.left {
-    left: 0;
-  }
-
-  #switchCameraButton {
-    left: calc(50% - 32px);
-    top: calc(18% - 32px);
-  }
-
-  #toggleFullScreenButton {
-    left: calc(50% - 32px);
-    top: calc(82% - 32px);
-  }
 }
