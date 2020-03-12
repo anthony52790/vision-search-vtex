@@ -83,32 +83,32 @@ function initCameraUI() {
     location.href = location.href;
   })
 
-  function fullScreenChange() {
-    if (screenfull.isFullscreen) {
-      toggleFullScreenButton.setAttribute('aria-pressed', true);
-    } else {
-      toggleFullScreenButton.setAttribute('aria-pressed', false);
-    }
-  }
+ // function fullScreenChange() {
+ //   if (screenfull.isFullscreen) {
+ //     toggleFullScreenButton.setAttribute('aria-pressed', true);
+ //   } else {
+ //     toggleFullScreenButton.setAttribute('aria-pressed', false);
+ //   }
+ // }
 
-  if (screenfull.isEnabled) {
-    screenfull.on('change', fullScreenChange);
+ // if (screenfull.isEnabled) {
+ //   screenfull.on('change', fullScreenChange);
 
-    toggleFullScreenButton.style.display = 'block';
+ //   toggleFullScreenButton.style.display = 'block';
 
-    fullScreenChange();
+ //   //fullScreenChange();
 
-    toggleFullScreenButton.addEventListener('click', function() {
-      screenfull.toggle(document.getElementById('container')).then(function() {
-        console.log(
-          'Fullscreen mode: ' +
-            (screenfull.isFullscreen ? 'enabled' : 'disabled'),
-        );
-      });
-    });
-  } else {
-    console.log("iOS doesn't support fullscreen (yet)");
-  }
+ //   toggleFullScreenButton.addEventListener('click', function() {
+ //     screenfull.toggle(document.getElementById('container')).then(function() {
+ //       console.log(
+ //         'Fullscreen mode: ' +
+ //           (screenfull.isFullscreen ? 'enabled' : 'disabled'),
+ //       );
+ //     });
+ //   });
+ // } else {
+ //   console.log("iOS doesn't support fullscreen (yet)");
+ // }
 
   if (amountOfCameras > 1) {
     switchCameraButton.style.display = 'block';
@@ -232,11 +232,9 @@ function sendFileToCloudVision(urlImage){
 }
 
 function convertToSpanish(res){
-  console.log(res);
   $('.content').addClass('active');
   var text = res.responses[0].localizedObjectAnnotations[0].name;
   var req ={q: text,source: "en",target: "es",format: "text"}
-
   ajaxVision(key_translate,JSON.stringify(req)).then(function(res){
     sendToVtexSearch(JSON.parse(res));
   })
@@ -244,19 +242,23 @@ function convertToSpanish(res){
 
 function sendToVtexSearch(res){
   var search = res.data.translations[0].translatedText;
-  var a = $.trim(search.replace(/\'|\"/, ""));
+  var a = search.trim();
   a.match(/^[a-n o-záéíóú \-]+$/i);
   document.getElementsByClassName("loading")[0].style.display = 'none';
-  var url='/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
-  ajaxVtex(url).then(function(res){
-    if(res.length > 0){
-      console.log(data)
-    }else{
-      document.getElementById("alert").innerHTML = "No existe coincidencias";
-    }
-  }).catch(function(error){
-      document.getElementById("error").innerHTML = error;
-  })
+  if(a === "Persona"){
+    document.getElementById("error").innerHTML = "Error: solo se permiten productos";
+  }else{
+    var url='/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
+    ajaxVtex(url).then(function(res){
+      if(res.length > 0){
+        console.log(data)
+      }else{
+        document.getElementById("alert").innerHTML = "No existe coincidencias";
+      }
+    }).catch(function(error){
+        document.getElementById("error").innerHTML = error;
+    })    
+  }
 }
 
 function createClickFeedbackUI() {
@@ -308,13 +310,14 @@ function ajaxVtex(url){
         if(http.readyState == 4 && http.status == 200){
             resolve(http.response);
         }else if(http.status == 404){
-            reject(Error(http.statusText));
+            reject("Error de conexion con vtex");
         }
     }
     http.onerror = function(){
-      reject(Error("error de conexion con vtex"))
+      reject(Error("Error de red"))
     }
     http.open("GET",url);
     http.setRequestHeader('Content-Type','application/json');
-})
+    http.send();
+  })
 }
