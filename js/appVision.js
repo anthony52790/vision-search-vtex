@@ -14,7 +14,13 @@ var currentFacingMode = 'environment';
 var disabled;
 var download;
 var closePhoto;
-
+var image;
+var headers = {
+  "Accept": "application/vnd.vtex.ds.v10+json",
+  "Content-Type": "application/json",
+  "x-vtex-api-appKey": "vtexappkey-promart-SFYPCG",
+  "x-vtex-api-appToken": "LCMGIKNSQTEOYJZNAZCCIVIHWLZKUECKEASSJSLLBMDPTZSXBBMMZLDPTEJXLDYMRTKYQGEINQBVSTNWSBITSQLSWDZEIOZYOQYZPUGUXEYIKHXARMEJUFUAIRBNHZZZ"
+};
 document.addEventListener('DOMContentLoaded', function(event) {
   DetectRTC.load(function() {
     if (DetectRTC.isWebRTCSupported == false) {
@@ -68,9 +74,9 @@ function initCameraUI() {
   download = document.getElementById('gcv_download');
   disabled = document.getElementById('gcv_gui_controls');
   closePhoto = document.getElementById('gcv_close-photo');
+  image = document.getElementById('gcv_img');
 
   takePhotoButton.addEventListener('click', function(e) {
-    console.log(e.target)
     createClickFeedbackUI();
     takeSnapshot();
   });
@@ -124,9 +130,9 @@ function initCameraUI() {
 
   window.addEventListener('orientationchange',function() {
       // iOS doesn't have screen.orientation, so fallback to window.orientation.
-      // screen.orientation will
-      if (screen.orientation) angle = screen.orientation.angle;
-      else angle = window.orientation;
+     screen.orientation
+     if (screen.orientation) angle = screen.orientation.angle;
+     else angle = window.orientation;
 
       var guiControls = document.getElementById('gcv_gui_controls').classList;
       var vidContainer = document.getElementById('gcv_vid_container').classList;
@@ -178,6 +184,7 @@ function initCameraStream() {
     const track = window.stream.getVideoTracks()[0];
     const settings = track.getSettings();
     str = JSON.stringify(settings, null, 4);
+    console.log(track)
     //return navigator.mediaDevices.enumerateDevices();
   }
 
@@ -215,20 +222,29 @@ function takeSnapshot() {
   var width = video.videoWidth;
   var height = video.videoHeight;
   var context;
-  //var img = new Image();
+  var img = new Image();
 
   canvas.width = width;
   canvas.height = height;
 
   context = canvas.getContext('2d');
   context.drawImage(video, 0, 0, width, height);
+  //context.beginPath();
+  //context.moveTo(0, 0);
+  //context.lineTo(300, 150);
+  //context.stroke();
 
   capture = canvas.toDataURL('image/jpeg');
   //download.setAttribute('href',capture);//descargar
-  //img.src = capture;//mostrar imagen
+  var capture_img = img.src = capture;//mostrar imagen
+  image.setAttribute("src",capture_img)
+  
   var urlImage = capture.replace('data:image/jpeg;base64,', '');
   sendFileToCloudVision(urlImage);
+
   disabled.classList.add('disabled');
+  video.style.display = "none";
+  image.style.display = "block"
   video.pause();
   //const track = window.stream.getVideoTracks()[0]; //salir de la foto
   //track.stop();
@@ -238,8 +254,8 @@ function sendFileToCloudVision(urlImage){
     requests:[{
       image:{content : urlImage},
       features:[
-        {type: "OBJECT_LOCALIZATION",maxResults: 10},
-        {maxResults: 10,type: "LABEL_DETECTION"}
+        {type: "OBJECT_LOCALIZATION",maxResults: 15},
+        {maxResults: 15,type: "LABEL_DETECTION"}
       ],
       imageContext: {
         cropHintsParams:{aspectRatios:[0.8,1,1.2]}
@@ -248,17 +264,19 @@ function sendFileToCloudVision(urlImage){
   }
 
   ajaxVision(key_vision,JSON.stringify(request)).then(function(res){
+    console.log(JSON.parse(res))
     closePhoto.classList.add('active');
     convertToSpanish(JSON.parse(res));
   })
 }
 function convertToSpanish(res){
-  $('.gcv_content').addClass('active');
+  //$('.gcv_content').addClass('active');
+  document.getElementsByClassName('gcv_content')[0].classList.add('active')
   if(res.responses[0]['localizedObjectAnnotations'] === undefined){
     setTimeout(function(){
       document.getElementsByClassName("gcv_loading")[0].style.display = 'none';
     },1000)
-    document.getElementById("gcv_error").innerHTML = "Conecte una camara en el dispositivo";
+    document.getElementById("gcv_error").innerHTML = "No existe resultados";
   }else{
     var text = res.responses[0].localizedObjectAnnotations[0].name;
     var req ={q: text,source: "en",target: "es",format: "text"}
@@ -275,8 +293,8 @@ function sendToVtexSearch(res){
   if(a === "Persona"){
     document.getElementById("gcv_error").innerHTML = "Error: solo se permiten productos";
   }else{
-    var url='/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
-    ajaxVtex(url).then(function(res){
+    var url='https://promart.vtexcommercestable.com.br/api/catalog_system/pub/products/search/?ft='+encodeURIComponent(a)
+    axios.get(url,headers).then(function(res){
       if(res.length > 0){
         console.log(data)
       }else{
@@ -306,6 +324,7 @@ function ajaxVision(url,data){
       http.send(data);
   })
 }
+/*
 function ajaxVtex(url){
   return new Promise((resolve,reject) => {
     const http = new XMLHttpRequest();
@@ -323,4 +342,4 @@ function ajaxVtex(url){
     http.setRequestHeader('Content-Type','application/json');
     http.send();
   })
-}
+}*/
